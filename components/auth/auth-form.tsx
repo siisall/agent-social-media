@@ -1,10 +1,12 @@
 ﻿"use client";
 
-import { FormEvent, useState, useTransition } from "react";
+import { FormEvent, useEffect, useState, useTransition } from "react";
+import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   signInAction,
+  resendSignupVerificationEmailAction,
   signUpAction,
   startGoogleOAuth,
   verifySignupEmailAction,
@@ -23,6 +25,11 @@ export function AuthForm({ mode, googleError = false }: AuthFormProps) {
   const [verificationCode, setVerificationCode] = useState("");
   const [notice, setNotice] = useState("");
 
+  useEffect(() => {
+    const pendingEmail = window.sessionStorage.getItem("pending-signup-verification-email");
+    if (pendingEmail) setVerificationEmail(pendingEmail);
+  }, []);
+
   function goToDashboard() {
     router.replace("/dashboard");
     router.refresh();
@@ -35,14 +42,19 @@ export function AuthForm({ mode, googleError = false }: AuthFormProps) {
     const formData = new FormData(event.currentTarget);
 
     startTransition(async () => {
-      const result = mode === "signup" ? await signUpAction(formData) : await signInAction(formData);
-      if (result.error) {
-        setError(result.error);
-      } else if ("needsVerification" in result && result.needsVerification) {
-        setVerificationEmail(result.email);
-        setNotice("We sent a 6-digit verification code to your email.");
-      } else if ("authenticated" in result && result.authenticated) {
-        goToDashboard();
+      try {
+        const result = mode === "signup" ? await signUpAction(formData) : await signInAction(formData);
+        if (result.error) {
+          setError(result.error);
+        } else if ("needsVerification" in result && result.needsVerification) {
+          window.sessionStorage.setItem("pending-signup-verification-email", result.email);
+          setVerificationEmail(result.email);
+          setNotice("We sent a 6-digit verification code to your email.");
+        } else if ("authenticated" in result && result.authenticated) {
+          goToDashboard();
+        }
+      } catch {
+        setError("Sign-in or sign-up failed. Please try again.");
       }
     });
   }
@@ -52,9 +64,34 @@ export function AuthForm({ mode, googleError = false }: AuthFormProps) {
     setError("");
 
     startTransition(async () => {
-      const result = await verifySignupEmailAction(verificationEmail, verificationCode.trim());
-      if (result.error) setError(result.error);
-      else if (result.authenticated) goToDashboard();
+      try {
+        const result = await verifySignupEmailAction(verificationEmail, verificationCode.trim());
+        if (result.error) setError(result.error);
+        else if (result.authenticated) {
+          window.sessionStorage.removeItem("pending-signup-verification-email");
+          goToDashboard();
+        }
+      } catch {
+        setError("Email verification failed. Please try again.");
+      }
+    });
+  }
+
+  function handleResendVerification() {
+    setError("");
+    setNotice("");
+
+    startTransition(async () => {
+      try {
+        const result = await resendSignupVerificationEmailAction(verificationEmail);
+        if (result.error) setError(result.error);
+        else {
+          setVerificationCode("");
+          setNotice("A new verification code has been sent to your email.");
+        }
+      } catch {
+        setError("We couldn't resend the verification code. Please try again.");
+      }
     });
   }
 
@@ -118,6 +155,9 @@ export function AuthForm({ mode, googleError = false }: AuthFormProps) {
             <button className="auth-primary-button" disabled={isPending} type="submit">
               {isPending ? "Verifying…" : "Verify email"}
             </button>
+            <button className="auth-google-button" disabled={isPending} onClick={handleResendVerification} type="button">
+              {isPending ? "Please wait…" : "Resend verification code"}
+            </button>
           </form>
         ) : (
           <>
@@ -150,10 +190,7 @@ export function AuthForm({ mode, googleError = false }: AuthFormProps) {
             <div className="auth-divider"><span>or sign in with</span></div>
 
             <form action={startGoogleOAuth}>
-              <button className="auth-google-button" type="submit">
-                <GoogleMark />
-                Continue with Google
-              </button>
+              <GoogleOAuthSubmitButton />
             </form>
           </>
         )}
@@ -169,6 +206,17 @@ export function AuthForm({ mode, googleError = false }: AuthFormProps) {
         </div>
       </section>
     </main>
+  );
+}
+
+function GoogleOAuthSubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button aria-busy={pending} className="auth-google-button" disabled={pending} type="submit">
+      <GoogleMark />
+      {pending ? "Connecting to Google…" : "Continue with Google"}
+    </button>
   );
 }
 

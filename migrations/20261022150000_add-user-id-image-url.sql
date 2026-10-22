@@ -7,6 +7,20 @@ CREATE TABLE IF NOT EXISTS public.user_profiles (
   created_at timestamp without time zone NOT NULL DEFAULT now()
 );
 
+-- Backfill profiles for auth accounts that existed before this table was added.
+INSERT INTO public.user_profiles (user_id, name, email, image_url)
+SELECT
+  id,
+  COALESCE(NULLIF(profile->>'name', ''), split_part(email, '@', 1)),
+  email,
+  COALESCE(
+    NULLIF(profile->>'avatar_url', ''),
+    NULLIF(profile->>'picture', '')
+  )
+FROM auth.users
+WHERE email IS NOT NULL
+ON CONFLICT DO NOTHING;
+
 ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
 GRANT SELECT ON TABLE public.user_profiles TO authenticated;
 

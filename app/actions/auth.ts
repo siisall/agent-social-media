@@ -3,6 +3,7 @@
 import { createAuthActions } from "@insforge/sdk/ssr";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { getInsForgeServerClient } from "@/lib/insforge/server";
 
 type AuthActionResult =
   | { error: string; needsVerification?: never; email?: never; authenticated?: never }
@@ -46,6 +47,20 @@ export async function verifySignupEmailAction(email: string, otp: string): Promi
   if (!data?.user) return { error: "We couldn't verify your email. Request a new code and try again." };
 
   return { authenticated: true };
+}
+
+export async function resendSignupVerificationEmailAction(email: string): Promise<{ error?: string }> {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) return { error: "Enter a valid email address and try again." };
+
+  const insforge = await getInsForgeServerClient();
+  const result = await insforge.auth.resendVerificationEmail({
+    email: normalizedEmail,
+    redirectTo: `${getAppUrl()}/signin`,
+  });
+
+  if (result.error) return { error: result.error.message };
+  return {};
 }
 
 export async function signInAction(formData: FormData): Promise<AuthActionResult> {
