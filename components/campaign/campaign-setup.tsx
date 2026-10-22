@@ -49,9 +49,13 @@ export function CampaignSetup() {
     formData.set("icon", icon);
     formData.set("office", office);
     startTransition(async () => {
-      const result = await createCampaignAction(formData);
-      if (result.error) setError(result.error);
-      else { router.replace(result.campaignId ? `/dashboard?campaignId=${encodeURIComponent(result.campaignId)}` : "/dashboard"); router.refresh(); }
+      try {
+        const result = await createCampaignAction(formData);
+        if (result.error) setError(result.error);
+        else { router.replace(result.campaignId ? `/dashboard?campaignId=${encodeURIComponent(result.campaignId)}` : "/dashboard"); router.refresh(); }
+      } catch {
+        setError("We couldn't create your campaign. Please try again.");
+      }
     });
   }
 

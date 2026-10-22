@@ -14,8 +14,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const params = await searchParams;
   const campaign = campaigns.find((item) => item.id === params.campaignId) ?? campaigns[0];
   const view = sections.includes(params.view ?? "") ? params.view! : "overview";
-
   const name = user.profile?.name || user.email.split("@")[0];
-  const date = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "Asia/Jakarta" }).format(new Date()).toUpperCase();
+  const date = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    timeZone: "Asia/Jakarta",
+  }).format(new Date()).toUpperCase();
+
   return <DashboardShell name={name} email={user.email} campaign={campaign} campaigns={campaigns} view={view} date={date} />;
 }
