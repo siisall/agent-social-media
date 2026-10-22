@@ -49,9 +49,13 @@ export function CampaignSetup() {
     formData.set("icon", icon);
     formData.set("office", office);
     startTransition(async () => {
-      const result = await createCampaignAction(formData);
-      if (result.error) setError(result.error);
-      else { router.replace("/dashboard"); router.refresh(); }
+      try {
+        const result = await createCampaignAction(formData);
+        if (result.error) setError(result.error);
+        else { router.replace("/dashboard"); router.refresh(); }
+      } catch {
+        setError("We couldn't create your campaign. Please try again.");
+      }
     });
   }
 
@@ -69,7 +73,7 @@ export function CampaignSetup() {
       <section className="campaign-setup-card" aria-labelledby="campaign-title">
         {step === 1 ? <div className="campaign-step-content">
           <h1 id="campaign-title" className="campaign-step-title">Create your first campaign</h1>
-          <p className="campaign-step-description">Give it a name and a logo. You can change these later.</p>
+          <p className="campaign-step-description">Give it a name and a logo.</p>
           <label className="campaign-field-label" htmlFor="campaign-name">Campaign name</label>
           <input id="campaign-name" className="campaign-name-input" maxLength={80} onChange={(event) => setName(event.target.value)} placeholder="e.g. Summer product launch" value={name} />
           <div className="campaign-icon-heading"><span className="campaign-field-label">Logo</span><small>Choose a style that feels like you</small></div>
