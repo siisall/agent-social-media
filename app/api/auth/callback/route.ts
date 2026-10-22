@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/signin?error=google", request.url));
   }
 
-  const response = NextResponse.redirect(new URL("/dashboard", request.url));
+  const response = NextResponse.redirect(new URL("/create-campaign", request.url));
   const auth = createAuthActions({
     requestCookies: request.cookies,
     responseCookies: response.cookies,

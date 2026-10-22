@@ -11,3 +11,15 @@ export async function getCurrentUser() {
 
   return error ? null : data.user;
 }
+
+export async function getUserCampaign(userId: string) {
+  const insforge = await getInsForgeServerClient();
+  const { data, error } = await insforge.database
+    .from("campaign")
+    .select("id, name, icon, office, created_at")
+    .eq("user_id", userId)
+    .limit(1);
+
+  if (error) throw new Error(`Unable to load campaign: ${error.message}`);
+  return data?.[0] ?? null;
+}
