@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth/auth-form";
-import { getCurrentUser } from "@/lib/insforge/server";
+import { getCurrentUser, getUserCampaign } from "@/lib/insforge/server";
 
 export default async function SignUpPage() {
-  if (await getCurrentUser()) redirect("/dashboard");
+  const user = await getCurrentUser();
+  if (user) redirect((await getUserCampaign(user.id)) ? "/dashboard" : "/create-campaign");
   return <AuthForm mode="signup" />;
 }

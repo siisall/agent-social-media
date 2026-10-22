@@ -85,6 +85,37 @@ export async function signInAction(formData: FormData): Promise<AuthActionResult
   return { authenticated: true };
 }
 
+export async function createCampaignAction(formData: FormData): Promise<{ error?: string }> {
+  const name = String(formData.get("name") || "").trim();
+  const icon = String(formData.get("icon") || "");
+  const office = String(formData.get("office") || "");
+  const offices = ["/offices/modern-office.png", "/offices/wooden-office.png"];
+  if (!name || name.length > 80) return { error: "Enter a campaign name between 1 and 80 characters." };
+  if (!icon || icon.length > 900_000) return { error: "Choose an icon or upload an image under 650 KB." };
+  if (!offices.includes(office)) return { error: "Choose an AI Agent Office to continue." };
+
+  const insforge = await getInsForgeServerClient();
+  const { data: userData, error: userError } = await insforge.auth.getCurrentUser();
+  if (userError || !userData.user) return { error: "Your session expired. Sign in again to create a campaign." };
+
+  const { data: existing, error: lookupError } = await insforge.database
+    .from("campaign")
+    .select("id")
+    .eq("user_id", userData.user.id)
+    .limit(1);
+  if (lookupError) return { error: "We couldn't check your workspace. Please try again." };
+  if (existing?.length) return {};
+
+  const { error } = await insforge.database.from("campaign").insert([{
+    user_id: userData.user.id,
+    name,
+    icon,
+    office,
+  }]);
+  if (error) return { error: "We couldn't save your campaign. Please try again." };
+  return {};
+}
+
 export async function startGoogleOAuth() {
   const cookieStore = await cookies();
   const auth = createAuthActions({ cookies: cookieStore });

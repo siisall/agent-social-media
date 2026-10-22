@@ -30,8 +30,8 @@ export function AuthForm({ mode, googleError = false }: AuthFormProps) {
     if (pendingEmail) setVerificationEmail(pendingEmail);
   }, []);
 
-  function goToDashboard() {
-    router.replace("/dashboard");
+  function goToCampaignSetup() {
+    router.replace("/create-campaign");
     router.refresh();
   }
 
@@ -51,7 +51,7 @@ export function AuthForm({ mode, googleError = false }: AuthFormProps) {
           setVerificationEmail(result.email);
           setNotice("We sent a 6-digit verification code to your email.");
         } else if ("authenticated" in result && result.authenticated) {
-          goToDashboard();
+          goToCampaignSetup();
         }
       } catch {
         setError("Sign-in or sign-up failed. Please try again.");
@@ -69,7 +69,7 @@ export function AuthForm({ mode, googleError = false }: AuthFormProps) {
         if (result.error) setError(result.error);
         else if (result.authenticated) {
           window.sessionStorage.removeItem("pending-signup-verification-email");
-          goToDashboard();
+          goToCampaignSetup();
         }
       } catch {
         setError("Email verification failed. Please try again.");
