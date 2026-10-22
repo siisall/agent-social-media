@@ -85,7 +85,7 @@ export async function signInAction(formData: FormData): Promise<AuthActionResult
   return { authenticated: true };
 }
 
-export async function createCampaignAction(formData: FormData): Promise<{ error?: string }> {
+export async function createCampaignAction(formData: FormData): Promise<{ error?: string; campaignId?: string }> {
   const name = String(formData.get("name") || "").trim();
   const icon = String(formData.get("icon") || "");
   const office = String(formData.get("office") || "");
@@ -98,21 +98,32 @@ export async function createCampaignAction(formData: FormData): Promise<{ error?
   const { data: userData, error: userError } = await insforge.auth.getCurrentUser();
   if (userError || !userData.user) return { error: "Your session expired. Sign in again to create a campaign." };
 
-  const { data: existing, error: lookupError } = await insforge.database
-    .from("campaign")
-    .select("id")
-    .eq("user_id", userData.user.id)
-    .limit(1);
-  if (lookupError) return { error: "We couldn't check your workspace. Please try again." };
-  if (existing?.length) return {};
-
-  const { error } = await insforge.database.from("campaign").insert([{
+  const { data: created, error } = await insforge.database.from("campaign").insert([{
     user_id: userData.user.id,
     name,
     icon,
     office,
-  }]);
-  if (error) return { error: "We couldn't save your campaign. Please try again." };
+  }]).select("id");
+  if (error) return { error: error.message };
+  return { campaignId: created?.[0]?.id };
+}
+
+export async function updateCampaignAction(formData: FormData): Promise<{ error?: string }> {
+  const id = String(formData.get("id") || "");
+  const name = String(formData.get("name") || "").trim();
+  const icon = String(formData.get("icon") || "");
+  const office = String(formData.get("office") || "");
+  const offices = ["/offices/modern-office.png", "/offices/wooden-office.png"];
+  if (!id || !name || name.length > 80) return { error: "Enter a campaign name between 1 and 80 characters." };
+  if (!icon || icon.length > 900_000) return { error: "Choose a valid campaign icon." };
+  if (!offices.includes(office)) return { error: "Choose an AI Agent Office to continue." };
+
+  const insforge = await getInsForgeServerClient();
+  const { data: userData, error: userError } = await insforge.auth.getCurrentUser();
+  if (userError || !userData.user) return { error: "Your session expired. Sign in again." };
+
+  const { error } = await insforge.database.from("campaign").update({ name, icon, office }).eq("id", id).eq("user_id", userData.user.id);
+  if (error) return { error: error.message };
   return {};
 }
 
