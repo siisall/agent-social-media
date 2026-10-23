@@ -7,7 +7,7 @@ import { ArrowLeft, ArrowRight, Check, Flame, Layers3, Leaf, Megaphone, Rocket, 
 import { createCampaignAction } from "@/app/actions/auth";
 
 const icons = [
-  { value: "rocket", label: "Rocket", Component: Rocket, color: "#347ff0" },
+  { value: "rocket", label: "Rocket", Component: Rocket, color: "#7060e5" },
   { value: "sparkles", label: "Sparkles", Component: Sparkles, color: "#a34ee8" },
   { value: "megaphone", label: "Megaphone", Component: Megaphone, color: "#f06c46" },
   { value: "leaf", label: "Leaf", Component: Leaf, color: "#20aa79" },
@@ -62,7 +62,7 @@ export function CampaignSetup() {
   return (
     <main className="campaign-setup-shell">
       <header className="campaign-setup-header">
-        <a className="campaign-wordmark" href="/dashboard"><span className="campaign-brand-mark"><Layers3 size={18} /></span> Social Agent</a>
+        <a className="campaign-wordmark" href="/dashboard"><span className="campaign-brand-mark"><Layers3 size={18} /></span><span>Social Agent</span></a>
         <span className="campaign-save-note"><i /> Workspace setup</span>
       </header>
       <div className="campaign-stepper" aria-label={`Step ${step} of 2`}>
@@ -72,15 +72,15 @@ export function CampaignSetup() {
       </div>
       <section className="campaign-setup-card" aria-labelledby="campaign-title">
         {step === 1 ? <div className="campaign-step-content">
-          <h1 id="campaign-title" className="campaign-step-title">Create a campaign</h1>
+          <h1 id="campaign-title" className="campaign-step-title">Create your first campaign</h1>
           <p className="campaign-step-description">Give it a name and a logo. You can change these later.</p>
           <label className="campaign-field-label" htmlFor="campaign-name">Campaign name</label>
-          <input id="campaign-name" className="campaign-name-input" maxLength={80} onChange={(event) => setName(event.target.value)} placeholder="e.g. Summer product launch" value={name} />
+          <input id="campaign-name" className="campaign-name-input" maxLength={80} onChange={(event) => setName(event.target.value)} placeholder="e.g. Summer Product Launch" value={name} />
           <div className="campaign-icon-heading"><span className="campaign-field-label">Logo</span><small>Choose a style that feels like you</small></div>
           <div className="campaign-icon-options" role="radiogroup" aria-label="Campaign icon">
             {icons.map(({ value, label, Component, color }) => <button aria-checked={icon === value} aria-label={label} className={`campaign-icon-choice ${icon === value ? "is-selected" : ""}`} key={value} onClick={() => setIcon(value)} role="radio" style={{ "--icon-color": color } as React.CSSProperties} type="button"><Component size={20} strokeWidth={2} /></button>)}
             <label className={`campaign-upload-choice ${icon.startsWith("data:") ? "is-selected" : ""}`} title="Upload a custom icon">
-              {icon.startsWith("data:") ? <img alt="Custom campaign icon" src={icon} /> : <><Upload size={16} /><span>Upload</span></>}
+              {icon.startsWith("data:") ? <Image alt="Custom campaign icon" className="custom-icon-preview" fill src={icon} unoptimized /> : <><Upload size={16} /><span>Upload</span></>}
               <input accept="image/*" onChange={(event) => uploadIcon(event.target.files?.[0])} type="file" />
             </label>
           </div>
